@@ -26,8 +26,8 @@ import "base" Text.Printf (printf)
 data Result = Result
   { totalTime :: {-# unpack #-} !Word64
   , totalElements :: {-# unpack #-} !Word64
-  -- , meanTime :: {-# unpack #-} !(Fixed E3)
   , rangeTime :: {-# unpack #-} !Word64
+  , meanTime :: {-# unpack #-} !Double
   , stdevTime :: {-# unpack #-} !Double
   }
 
@@ -36,6 +36,7 @@ prettyResult Result{..} = unlines
   [ "Time elapsed: " ++ showWord64Nanos3 totalTime
   , "Range: " ++ showWord64Nanos3 rangeTime
   , "Stdev: " ++ showDoubleNanos3 stdevTime
+  , "Mean: " ++ showDoubleNanos3 meanTime
   ]
 
 data IntermediateResult = IntermediateResult
@@ -76,6 +77,7 @@ bench s0 = do
     , totalElements = itotalElements
     , rangeTime = imaxTime - iminTime
     , stdevTime = sqrt (m2 / (word64ToDouble n - 1))
+    , meanTime = mean
     }
   where
     go :: Stream (Of a) IO r -> IntermediateResult -> OnlineVariance -> IO (IntermediateResult, OnlineVariance)
