@@ -148,7 +148,7 @@ word64ToDouble :: Word64 -> Double
 word64ToDouble = fromIntegral
 
 showWord64Nanos3 :: Word64 -> String
-showWord64Nanos3 (times 1000 -> w) = showDoubleNanos3 (word64ToDouble w)
+showWord64Nanos3 w = showDoubleNanos3 (word64ToDouble w)
 
 showDoubleNanos3 :: Double -> String
 showDoubleNanos3 (times 1000 -> d)
