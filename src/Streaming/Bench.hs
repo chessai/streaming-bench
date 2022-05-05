@@ -10,6 +10,7 @@
 module Streaming.Bench
   ( bench
   , bench_
+  , Result(..)
   ) where
 
 import "base" System.Mem (performGC)
