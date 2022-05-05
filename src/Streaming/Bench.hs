@@ -9,6 +9,7 @@
 
 module Streaming.Bench
   ( bench
+  , bench_
   ) where
 
 import "base" System.Mem (performGC)
@@ -67,7 +68,7 @@ bench_ s0 = do
   bench s0
   pure ()
 
-bench :: forall a r. Stream (Of a) IO r -> IO (Of [a] r)
+bench :: forall a r. Stream (Of a) IO r -> IO (Result, Of [a] r)
 bench s0 = do
   performGC
   let i0 = mempty
@@ -76,15 +77,16 @@ bench s0 = do
         , mean = 0.0
         , m2 = 0.0
         }
-  (IntermediateResult{..}, OnlineVariance{..}, results) <- go s0 i0 o0 []
-  putStrLn $ prettyResult $ Result
-    { totalTime = itotalTime
-    , totalElements = itotalElements
-    , rangeTime = imaxTime - iminTime
-    , stdevTime = sqrt (m2 / (word64ToDouble n - 1))
-    , meanTime = mean
-    }
-  pure results
+  (IntermediateResult{..}, OnlineVariance{..}, values) <- go s0 i0 o0 []
+  let timing = Result
+        { totalTime = itotalTime
+        , totalElements = itotalElements
+        , rangeTime = imaxTime - iminTime
+        , stdevTime = sqrt (m2 / (word64ToDouble n - 1))
+        , meanTime = mean
+        }
+  putStrLn $ prettyResult timing
+  pure (timing, values)
   where
     go :: Stream (Of a) IO r -> IntermediateResult -> OnlineVariance -> [a] -> IO (IntermediateResult, OnlineVariance, Of [a] r)
     go stream !accI accO@OnlineVariance{..} !accVal = do
