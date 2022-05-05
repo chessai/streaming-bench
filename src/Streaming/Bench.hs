@@ -62,7 +62,12 @@ instance Monoid IntermediateResult where
     , iminTime = maxBound
     }
 
-bench :: forall a r. Stream (Of a) IO r -> IO ()
+bench_ :: forall a r. Stream (Of a) IO r -> IO ()
+bench_ s0 = do
+  bench s0
+  pure ()
+
+bench :: forall a r. Stream (Of a) IO r -> IO (Of [a] r)
 bench s0 = do
   performGC
   let i0 = mempty
@@ -71,7 +76,7 @@ bench s0 = do
         , mean = 0.0
         , m2 = 0.0
         }
-  (IntermediateResult{..}, OnlineVariance{..}) <- go s0 i0 o0
+  (IntermediateResult{..}, OnlineVariance{..}, results) <- go s0 i0 o0 []
   putStrLn $ prettyResult $ Result
     { totalTime = itotalTime
     , totalElements = itotalElements
@@ -79,14 +84,15 @@ bench s0 = do
     , stdevTime = sqrt (m2 / (word64ToDouble n - 1))
     , meanTime = mean
     }
+  pure results
   where
-    go :: Stream (Of a) IO r -> IntermediateResult -> OnlineVariance -> IO (IntermediateResult, OnlineVariance)
-    go stream !accI accO@OnlineVariance{..} = do
+    go :: Stream (Of a) IO r -> IntermediateResult -> OnlineVariance -> [a] -> IO (IntermediateResult, OnlineVariance, Of [a] r)
+    go stream !accI accO@OnlineVariance{..} !accVal = do
       (timeElapsed, e) <- stopwatch_ (S.next stream)
       case e of
         Left r -> do
-          pure (accI, accO)
-        Right (_, rest) -> do
+          pure (accI, accO, accVal :> r)
+        Right (it, rest) -> do
 
           let iresult = IntermediateResult
                 { itotalTime = timeElapsed
@@ -104,8 +110,7 @@ bench s0 = do
                 , mean = mean + delta / word64ToDouble n1
                 , m2 = m2 + delta * (x - mean)
                 }
-
-          go rest (iresult <> accI) o
+          go rest (iresult <> accI) o (it : accVal)
 
 stopwatch_ :: IO a -> IO (Word64, a)
 stopwatch_ io = do
