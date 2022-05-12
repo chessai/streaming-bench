@@ -16,6 +16,7 @@ module Streaming.Bench
 import "base" System.Mem (performGC)
 import "base" Data.Monoid (Ap(..))
 import "base" Control.Exception qualified as E
+import "base" Control.Monad (void)
 import "base" Data.Word (Word64)
 import "streaming" Streaming.Prelude (Stream, Of(..))
 import "streaming" Streaming.Prelude qualified as S
@@ -66,8 +67,7 @@ instance Monoid IntermediateResult where
 
 bench_ :: forall a r. Stream (Of a) IO r -> IO ()
 bench_ s0 = do
-  bench s0
-  pure ()
+  void (bench s0)
 
 bench :: forall a r. Stream (Of a) IO r -> IO (Result, Of [a] r)
 bench s0 = do
